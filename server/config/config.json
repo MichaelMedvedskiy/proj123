@@ -1,0 +1,16 @@
+{
+
+  "test":{
+    "PORT": 3000,
+    "MONGODB_URI":"mongodb://localhost:27017/BeautyApp",
+    "JWT_SECRET": "kajdiydendvajdivden"
+  },
+
+  "development":{
+    "PORT": 3000,
+    "MONGODB_URI":"mongodb://localhost:27017/BeautyApp",
+    "JWT_SECRET": "kajdiydendvajdivden1337"
+  }
+
+
+}
