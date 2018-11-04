@@ -26,6 +26,7 @@ app.use(bodyParser.json());
 app.post('/users', async (req,res)=>{
     try{
         //All the user data necessary for registration go here
+        //TODO: When adding new fields to model, they come through here as data formed from HTTP request
         let user = new User(_.pick(req.body,['email','password','phone','firstName','lastName','birthDate','sex','userType', 'login','rating']));
         await user.save();
         const token = await user.generateAuthToken();

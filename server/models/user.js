@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 const bcrypt = require('bcryptjs');
 
-var UserSchema = new mongoose.Schema(
+const UserSchema = new mongoose.Schema(
 
   {
       firstName: {
@@ -60,7 +60,8 @@ var UserSchema = new mongoose.Schema(
       required: true,
       minlength: 6
     },
-      //The data to the creation of the model gets sent from the server.js file!
+      //The data to the creation of the model gets sent from the server.js file!/
+      //TODO: validate data to be 0-10 integer
   rating: {
       type: Number,
       required:  function() { return this.userType; }
@@ -83,15 +84,15 @@ var UserSchema = new mongoose.Schema(
 );
 
 UserSchema.methods.toJSON = function (){
-  var user = this;
-  var userObject = user.toObject();
+  const user = this;
+  const userObject = user.toObject();
   return _.pick(userObject, ['_id','email','userType']);
 };
 
 UserSchema.methods.generateAuthToken = function() {
-  var user = this;
-  var access = 'Auth';
-  var token = jwt.sign(
+  let user = this;
+  const access = 'Auth';
+  const token = jwt.sign(
     {
       _id: user._id.toHexString(),
       userType:user.userType,//Will it decode as boolean?
@@ -106,7 +107,7 @@ UserSchema.methods.generateAuthToken = function() {
 };
 
 UserSchema.methods.removeToken = function(token){
-  var user = this;
+  let user = this;
   return user.update({
     $pull: {
       tokens: {
@@ -118,8 +119,8 @@ UserSchema.methods.removeToken = function(token){
 };
 
 UserSchema.statics.findByToken = function(token){
-  var User = this;
-  var decoded;
+  const User = this;
+  let decoded;
 
   try{
       decoded = jwt.verify(token,process.env.JWT_SECRET);
@@ -139,7 +140,7 @@ UserSchema.statics.findByToken = function(token){
 
 //TODO: Change Email for the "Allavalible data - phone, email, login"
 UserSchema.statics.findByCredentials = function(identificationMean, password){
-  var User = this;
+  const User = this;
 
     //User.findOne({email}).then((user)=>{
     //Here it checks both for the email, LOGIN and phone to find user for password check
@@ -173,12 +174,12 @@ UserSchema.statics.findByCredentials = function(identificationMean, password){
 }
 
 
-
+//Hashess password on each save of user model, when a password is touched
 UserSchema.pre('save', function(next){
-  var user = this;
+  let user = this;
 
   if(user.isModified('password')) {
-    var pass = user.password;
+    const pass = user.password;
     bcrypt.genSalt(10,(err,salt)=>{
       bcrypt.hash(pass,salt,(err,hash)=>{
         user.password = hash;
@@ -190,7 +191,17 @@ UserSchema.pre('save', function(next){
   }
 });
 
-var User = mongoose.model('User',
+//Patch the differences between Master and Customer
+UserSchema.pre('save',  function(next){
+    let user = this;
+//removes rating
+    if(user.isModified('rating') && user.userType===false)
+        user.rating = undefined;
+
+        next();
+});
+
+const User = mongoose.model('User',
 UserSchema
 );
 
