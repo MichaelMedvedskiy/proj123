@@ -62,10 +62,11 @@ const UserSchema = new mongoose.Schema(
     },
       //The data to the creation of the model gets sent from the server.js file!/
       //TODO: validate data to be 0-10 integer
-  rating: {
-      type: Number,
-      required:  function() { return this.userType; }
-  },
+      rating:{
+          type: Number,
+          default:undefined
+      },
+
     tokens: [
       {
         access: {
@@ -117,6 +118,8 @@ UserSchema.methods.removeToken = function(token){
   }
   );
 };
+    //get all user related info
+//get user data - it is in the token
 
 UserSchema.statics.findByToken = function(token){
   const User = this;
@@ -195,10 +198,13 @@ UserSchema.pre('save', function(next){
 UserSchema.pre('save',  function(next){
     let user = this;
 //removes rating
-    if(user.isModified('rating') && user.userType===false)
-        user.rating = undefined;
+    if(user.userType && user.rating===undefined){
+        user.rating = 0;
+       // console.log(123);
+    }
 
-        next();
+
+     next();
 });
 
 const User = mongoose.model('User',

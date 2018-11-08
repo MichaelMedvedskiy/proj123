@@ -1,18 +1,21 @@
 var {User} = require('./../models/user');
 
-var authenticate = function(req, res, next) {
-  var token = req.header('x-auth');
-  User.findByToken(token).then((user)=>{
+var authenticate = async function(req, res, next) {
+  try{
+  let token = req.header('x-auth');
+  let user = await User.findByToken(token);
     if(!user){
       console.log('No user with such token');
-      return Promise.reject(e);
+      //return Promise.reject(e);
+      throw new Error('Your authentication is incorrect');
     }
-    req.user = user;
+    req.userId = user._id;
+    req.userType = user.userType;
     req.token = token;
     next();
-  }).catch((e)=>{
+  }catch(e){
     res.status(401).send(e);
-  });
+  };
 };
 
 module.exports = {authenticate};
