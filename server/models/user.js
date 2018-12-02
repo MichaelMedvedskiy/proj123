@@ -23,21 +23,10 @@ const UserSchema = new mongoose.Schema(
           type: Boolean,
           required: true
       },
-      userType: {
-          type: Boolean,
-          required: true
-      },
-      login: {
-          type: String,
-          required: true,
-          minlength: 6,
-          trim: true,
-          unique: true
 
-      },
     email: {
       type: String,
-      required: true,
+      required: false,
       minlength: 6,
       trim: true,
       unique: true,
@@ -46,26 +35,22 @@ const UserSchema = new mongoose.Schema(
             return validator.isEmail(value);
         },
         message: '{VALUE} is not a valid email'
-      }
+      },
+        sparse: true
     },
     phone: {
         type: String,
-        required: true,
+        required: false,
         minlength: 7,
         trim: true,
-        unique: true
+        unique: true,
+        sparse: true
     },
     password: {
       type: String,
       required: true,
       minlength: 6
     },
-      //The data to the creation of the model gets sent from the server.js file!/
-      //TODO: validate data to be 0-10 integer
-      rating:{
-          type: Number,
-          default:undefined
-      },
 
     tokens: [
       {
@@ -83,11 +68,12 @@ const UserSchema = new mongoose.Schema(
 
 
 );
+//TODO: here will be written, what is returned as JSON, if the schema changes, this should change as well
 
 UserSchema.methods.toJSON = function (){
   const user = this;
   const userObject = user.toObject();
-  return _.pick(userObject, ['_id','email','userType']);
+  return _.pick(userObject, ['_id','email','phone','sex','birthDate','firstName','lastName']);
 };
 
 UserSchema.methods.generateAuthToken = function() {
@@ -96,7 +82,6 @@ UserSchema.methods.generateAuthToken = function() {
   const token = jwt.sign(
     {
       _id: user._id.toHexString(),
-      userType:user.userType,//Will it decode as boolean?
        access
     },
     process.env.JWT_SECRET
@@ -129,7 +114,6 @@ UserSchema.statics.findByToken = function(token){
       decoded = jwt.verify(token,process.env.JWT_SECRET);
       return User.findOne({
       '_id': decoded._id,
-      'userType': decoded.userType,
       'tokens.token': token,
       'tokens.access': 'Auth'
     });
@@ -141,7 +125,6 @@ UserSchema.statics.findByToken = function(token){
   }
 };
 
-//TODO: Change Email for the "Allavalible data - phone, email, login"
 UserSchema.statics.findByCredentials = function(identificationMean, password){
   const User = this;
 
@@ -151,8 +134,7 @@ UserSchema.statics.findByCredentials = function(identificationMean, password){
     return User.findOne(
         {$or: [
                 {email: identificationMean},
-                {phone: identificationMean},
-                {login: identificationMean}
+                {phone: identificationMean}
             ]}
         ).then((user)=>{
     if(!user) return Promise.reject();
@@ -193,19 +175,12 @@ UserSchema.pre('save', function(next){
     next();
   }
 });
+// UserSchema.pre('save',function () {
+//    if(this.isModified('phone')) this.email = undefined;
+//    if(this.isModified('email')) this.phone = undefined;
+//
+// });
 
-//Patch the differences between Master and Customer
-UserSchema.pre('save',  function(next){
-    let user = this;
-//removes rating
-    if(user.userType && user.rating===undefined){
-        user.rating = 0;
-       // console.log(123);
-    }
-
-
-     next();
-});
 
 const User = mongoose.model('User',
 UserSchema
